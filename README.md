@@ -23,10 +23,4 @@ https://portal.eeszt.gov.hu/torzspublikacio-portlet/rest/torzsvizualizacio/getEn
 #### Példahívás:
 Az alábbi példába a T_ORSZAG törzset töltjük le, oldalanként 20 sort tölt egyszerre. A program indulásnál inicializál egy üres 'new.csv' fájlt és ehez fűzi hozzá a letöltött oldalakat. 0 oldalról indul a letöltés és amíg van adat nem áll meg. A program futása végén kíírja, hogy hány sort töltött le és hány található az eeszt portalon! Ha a két szám nem egyezik meg probléma léphetett fel.
 
-`python download.py -torzs T_ORSZAG.T_ORSZAG.K -output new.csv -csv_sep "|" -page_size  20`
-
-
-
-
-
-
+`python eeszt_portal_downloader.py -torzs T_ORSZAG.T_ORSZAG.K -output new.csv -csv_sep "|" -page_size  20`
