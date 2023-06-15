@@ -3,7 +3,10 @@ from argparse import ArgumentParser
 import json
 import pandas as pd
 import requests
-
+####
+## Run Example:
+## python eeszt_portal_downloader.py -torzs T_ORSZAG.T_ORSZAG.K -output new.csv -csv_sep "|" -page_size  20
+####
 
 PORTAL_URL = 'https://portal.eeszt.gov.hu/torzspublikacio-portlet/rest/torzsvizualizacio/getEntity'
 ENTITY_NAME = 'PUBLIKUS_ORVOS.PUBLIKUS_ORVOS.M'
@@ -12,6 +15,7 @@ CSV_SEPARATOR = ';'
 TOTAL_DOWNLOADED = 0
 TOTAL_IN_PORTAL = 0
 PAGE_SIZE = 50
+MAX_PAGE_TRY = 5
 
 def main():
     global PORTAL_URL
@@ -51,14 +55,14 @@ def main():
 #T_OLDALISAG.T_OLDALISAG.K
     page = 0
     while True:
-        last = download_page(entityName, page, PAGE_SIZE)
+        last = download_page(entityName, page, PAGE_SIZE, 1)
         if last:
             break
         page = page + 1
 
 
 # no more rows returns 'True'
-def download_page(entity_name, page, size):
+def download_page(entity_name, page, size, tryCounter):
     global TOTAL_DOWNLOADED;
     global TOTAL_IN_PORTAL;
     params = {
@@ -68,7 +72,12 @@ def download_page(entity_name, page, size):
     }
     print("downloading page:" , page, "size:", size,  "...")
     resp = requests.get(PORTAL_URL, params=params)
-    if resp.status_code != 200:
+    if resp.status_code != 200 and tryCounter <= MAX_PAGE_TRY:
+        print("Page download failed retrying...", str(tryCounter))
+        print("status code:", resp.status_code, "response:" , resp.text)
+        download_page(entity_name, page, size, tryCounter + 1)
+    elif resp.status_code != 200 and tryCounter > MAX_PAGE_TRY:
+        print("Maximal retry exceed application stopped!")
         raise ValueError(resp.text)
 
 
