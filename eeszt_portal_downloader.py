@@ -1,6 +1,8 @@
 
 from argparse import ArgumentParser
 import json
+import time
+import warnings
 import pandas as pd
 import requests
 ####
@@ -13,9 +15,10 @@ ENTITY_NAME = 'PUBLIKUS_ORVOS.PUBLIKUS_ORVOS.M'
 OUT_FILE = 'output.csv'
 CSV_SEPARATOR = ';'
 TOTAL_DOWNLOADED = 0
-TOTAL_IN_PORTAL = 0
+TOTAL_IN_PORTAL = -1
 PAGE_SIZE = 50
 MAX_PAGE_TRY = 5
+WAIT_SECS_BETWEEN_TRYS = 5
 
 def main():
     global PORTAL_URL
@@ -72,30 +75,38 @@ def download_page(entity_name, page, size, tryCounter):
     }
     print("downloading page:" , page, "size:", size,  "...")
     resp = requests.get(PORTAL_URL, params=params)
+    if resp.status_code != 200 and TOTAL_DOWNLOADED == TOTAL_IN_PORTAL:
+        print("Last page detected downloading stopped! downloaded rows: ", TOTAL_DOWNLOADED)
+        return True
+
     if resp.status_code != 200 and tryCounter <= MAX_PAGE_TRY:
-        print("Page download failed retrying...", str(tryCounter))
-        print("status code:", resp.status_code, "response:" , resp.text)
-        download_page(entity_name, page, size, tryCounter + 1)
+        warnings.warn("Page download failed retrying... " + str(tryCounter))
+        warnings.warn("status code: " + str(resp.status_code) + " response: " + resp.text)
+
+        time.sleep(WAIT_SECS_BETWEEN_TRYS)
+
+        return download_page(entity_name, page, size, tryCounter + 1)
     elif resp.status_code != 200 and tryCounter > MAX_PAGE_TRY:
         print("Maximal retry exceed application stopped!")
         raise ValueError(resp.text)
 
 
     data = json.loads(resp.text)
+
     names = [field['fieldName'] for field in data['fieldNames']]
     rows = [r['fields'] for r in data['entityRows']]
 
     if len(rows) == 0:
         print("Last page found downloading stopped!")
-        print("Total Downloaded rows: " + str(TOTAL_DOWNLOADED))
-        print("Total rows in portal: " + str(TOTAL_IN_PORTAL))
+        print("Total Downloaded rows:", str(TOTAL_DOWNLOADED))
+        print("Total rows in portal:", str(TOTAL_IN_PORTAL))
         return True;
 
     df = pd.DataFrame(rows)
     TOTAL_DOWNLOADED = TOTAL_DOWNLOADED + len(rows)
 
     if page == 0:
-         TOTAL_IN_PORTAL = data['totalRowCount']
+         TOTAL_IN_PORTAL = int(data['totalRowCount'])
          df.to_csv(OUT_FILE, mode = "a", header=names, sep= CSV_SEPARATOR, index = False)
     else:
         df.to_csv(OUT_FILE, mode = "a", header=False, sep= CSV_SEPARATOR, index = False)
