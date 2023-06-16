@@ -11,6 +11,7 @@ paraméterek nélküli indítás esetén a 'prod' EESZT portalról tölti le egy
 - OUT_FILE = 'output.csv'
 - CSV_SEPARATOR = ';'
 - PAGE_SIZE = 50
+- WAIT_SECS_BETWEEN_TRYS = 5 (Ha egy oldal letöltése elszáll ennyi másodpercet vár az újrapróbálkozások között)
 
 ### Parancssori argumentumokkal:
 - **-torzs**: a letölteni kívánt eeszt törzs azonosítója. (portalon f12 developerbe megnézhetjük a törzsek azonosítóját pl.
