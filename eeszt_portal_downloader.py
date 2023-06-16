@@ -5,6 +5,7 @@ import time
 import warnings
 import pandas as pd
 import requests
+
 ####
 ## Run Example:
 ## python eeszt_portal_downloader.py -torzs T_ORSZAG.T_ORSZAG.K -output new.csv -csv_sep "|" -page_size  20
@@ -55,13 +56,21 @@ def main():
 
     with open(OUT_FILE, 'w') as fp:
         pass
-#T_OLDALISAG.T_OLDALISAG.K
+
     page = 0
     while True:
         last = download_page(entityName, page, PAGE_SIZE, 1)
         if last:
+            print("Last page found downloading stopped!")
+            print("Total Downloaded rows:", str(TOTAL_DOWNLOADED))
+            print("Total rows found in portal:", str(TOTAL_IN_PORTAL))
             break
         page = page + 1
+
+    if TOTAL_DOWNLOADED != TOTAL_IN_PORTAL:
+        raise ValueError("Download result is incomplete please check the result or retry downloading!")
+    else:
+        print("Download successfully completed!")
 
 
 # no more rows returns 'True'
@@ -73,7 +82,9 @@ def download_page(entity_name, page, size, tryCounter):
         'page': page,
         'size': size
     }
+
     print("downloading page:" , page, "size:", size, end= " ")
+
     resp = requests.get(PORTAL_URL, params=params)
     if resp.status_code != 200 and TOTAL_DOWNLOADED == TOTAL_IN_PORTAL:
         print("Last page detected downloading stopped! downloaded rows: ", TOTAL_DOWNLOADED)
@@ -90,18 +101,12 @@ def download_page(entity_name, page, size, tryCounter):
         print("Maximal retry exceed application stopped!")
         raise ValueError(resp.text)
 
-
     data = json.loads(resp.text)
-
-
 
     names = [field['fieldName'] for field in data['fieldNames']]
     rows = [r['fields'] for r in data['entityRows']]
 
     if len(rows) == 0:
-        print("Last page found downloading stopped!")
-        print("Total Downloaded rows:", str(TOTAL_DOWNLOADED))
-        print("Total rows in portal:", str(TOTAL_IN_PORTAL))
         return True;
 
     df = pd.DataFrame(rows)
@@ -116,11 +121,10 @@ def download_page(entity_name, page, size, tryCounter):
     precentage = ( TOTAL_DOWNLOADED/ TOTAL_IN_PORTAL) * 100
     print("Progress: ", TOTAL_DOWNLOADED, "/", TOTAL_IN_PORTAL, "( " + f"{precentage:.2f}" + " % )" )
 
+    if TOTAL_DOWNLOADED == TOTAL_IN_PORTAL:
+        return True
+
     return False
-
-
-
-
 
 if __name__ == "__main__":
     main()
