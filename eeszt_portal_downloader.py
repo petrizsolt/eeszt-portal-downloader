@@ -73,7 +73,7 @@ def download_page(entity_name, page, size, tryCounter):
         'page': page,
         'size': size
     }
-    print("downloading page:" , page, "size:", size,  "...")
+    print("downloading page:" , page, "size:", size, end= " ")
     resp = requests.get(PORTAL_URL, params=params)
     if resp.status_code != 200 and TOTAL_DOWNLOADED == TOTAL_IN_PORTAL:
         print("Last page detected downloading stopped! downloaded rows: ", TOTAL_DOWNLOADED)
@@ -93,6 +93,8 @@ def download_page(entity_name, page, size, tryCounter):
 
     data = json.loads(resp.text)
 
+
+
     names = [field['fieldName'] for field in data['fieldNames']]
     rows = [r['fields'] for r in data['entityRows']]
 
@@ -110,6 +112,9 @@ def download_page(entity_name, page, size, tryCounter):
          df.to_csv(OUT_FILE, mode = "a", header=names, sep= CSV_SEPARATOR, index = False)
     else:
         df.to_csv(OUT_FILE, mode = "a", header=False, sep= CSV_SEPARATOR, index = False)
+
+    precentage = ( TOTAL_DOWNLOADED/ TOTAL_IN_PORTAL) * 100
+    print("Progress: ", TOTAL_DOWNLOADED, "/", TOTAL_IN_PORTAL, "( " + f"{precentage:.2f}" + " % )" )
 
     return False
 
