@@ -83,7 +83,7 @@ def download_page(entity_name, page, size, tryCounter):
         'size': size
     }
 
-    print("downloading page:" , page, "size:", size, end= " ")
+    print("downloading page:" , page, "size:", size, end= " ", flush=True)
 
     resp = requests.get(PORTAL_URL, params=params)
     if resp.status_code != 200 and TOTAL_DOWNLOADED == TOTAL_IN_PORTAL:
